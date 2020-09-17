@@ -1,0 +1,45 @@
+﻿@page "/"
+@using IdentNesto.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NM
+
+<ul>
+    @foreach (string err in Greske)
+    {
+        <li>@err</li>
+    }
+</ul>
+        <EditForm Model="_juzer" OnSubmit="Reg">
+            <p>Ime:</p>
+            <InputText @bind-Value="_juzer.Ime" />
+            <p>Mejl:</p>
+            <InputText @bind-Value="_juzer.Mejl" />
+            <p>Sifra:</p>
+            <InputText @bind-Value="_juzer.Sifra" />
+            <button class="btn-danger" type="submit">Unos</button>
+        </EditForm>
+
+
+@code
+{
+    private UserReg _juzer = new UserReg();
+    private HubConnection _hc;
+    private List<string> Greske = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hc = new HubConnectionBuilder().WithUrl(NM.ToAbsoluteUri("hab")).Build();
+
+        _hc.On<List<string>>("Return", (lst) =>
+            {
+                Greske = lst;
+                StateHasChanged();
+            });
+
+        await _hc.StartAsync();
+    }
+    private void Reg()
+    {
+        _hc.SendAsync("Reg", _juzer);
+    }
+}
